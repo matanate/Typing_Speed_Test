@@ -1,9 +1,10 @@
 # Standard library imports
 import os
-import time
+from itertools import zip_longest
+from tkinter import StringVar
 
 # Third-party library imports
-from customtkinter import CTkFrame, CTkLabel, CTkImage
+from customtkinter import CTkFrame, CTkLabel, CTkImage, CTkEntry
 from PIL import Image
 
 
@@ -120,6 +121,7 @@ class MainView(CTkFrame):
             "dog",
         ]
         self.current_word_index = 0
+        self.active_word_index = 0
 
         self.word_height = None
         self.cumulative_width = WORD_PAD
@@ -131,7 +133,11 @@ class MainView(CTkFrame):
         # Initialize Canvas
         self.initialize_canvas()
 
+        # Initialize Entry
+        self.initialize_entry()
+
         self.bind("<Configure>", self.configure_event_handler)
+        self.entry_text.trace_add("write", self.entry_text_callback)
 
     def initialize_titles(self):
         self.titles_frame = CTkFrame(self, fg_color="transparent")
@@ -168,6 +174,11 @@ class MainView(CTkFrame):
         self.create_word_frame()
         self.canvas_h = self.word_height * 3 + WORD_PAD * 4
         self.canvas.configure(height=self.canvas_h)
+
+    def initialize_entry(self):
+        self.entry_text = StringVar()
+        self.entry = CTkEntry(self, textvariable=self.entry_text)
+        self.entry.pack()
 
     def create_word_frame(self):
         word_label = CTkFrame(self.canvas)
@@ -209,7 +220,7 @@ class MainView(CTkFrame):
 
             self.cumulative_width += word_width + WORD_PAD
 
-    def scroll_lines(self, event):
+    def scroll_lines(self):
         iterations = 10
 
         # Incremental movement in pixels per iteration
@@ -245,3 +256,70 @@ class MainView(CTkFrame):
                 word_frame, current_x, current_y, target_y, iterations
             )
             self.canvas.update()
+
+    def entry_text_callback(self, var=None, index=None, mode=None):
+        word_frame = self.canvas.winfo_children()[self.active_word_index]
+        word_entered = self.entry_text.get()
+        self.set_active_word()
+        if word_entered != "" and word_entered[-1] == " ":
+            self.check_final_word()
+            self.next_word()
+        else:
+            for letter_frame, input_letter in zip_longest(
+                word_frame.winfo_children(), word_entered
+            ):
+                if letter_frame is not None:
+                    letter = letter_frame.cget("text")
+                    if input_letter == letter:
+                        letter_frame.configure(text_color="blue")
+                    elif input_letter is None:
+                        letter_frame.configure(text_color="black")
+                    else:
+                        letter_frame.configure(text_color="red")
+
+    def set_active_word(self):
+        word_frame = self.canvas.winfo_children()[self.active_word_index]
+        word_frame.configure(fg_color="#96E9C6")
+
+    def next_word(self):
+        word_frame = self.canvas.winfo_children()[self.active_word_index]
+        word_frame.configure(fg_color="transparent")
+        self.active_word_index += 1
+        self.entry_text.set("")
+        next_word_frame = self.canvas.winfo_children()[self.active_word_index]
+
+        if (next_word_frame.winfo_y() * SCREEN_SCALE) > (
+            3 * WORD_PAD + 2 * self.word_height
+        ):
+            self.scroll_lines()
+            for word_frame in self.canvas.winfo_children():
+                print(word_frame.winfo_y() * SCREEN_SCALE)
+                if word_frame.winfo_y() * SCREEN_SCALE < 0:
+                    word_frame.destroy()
+                    self.active_word_index -= 1
+                else:
+                    break
+            self.configure_event_handler()
+
+    def check_final_word(self):
+        word_frame = self.canvas.winfo_children()[self.active_word_index]
+        word_entered = self.entry_text.get()[:-1]
+        is_correct = True
+        for letter_frame, input_letter in zip_longest(
+            word_frame.winfo_children(), word_entered
+        ):
+            if letter_frame is None:
+                is_correct = False
+                break
+            else:
+                letter = letter_frame.cget("text")
+                if input_letter != letter:
+                    is_correct = False
+                    break
+        if is_correct:
+            text_color = "blue"
+        else:
+            text_color = "red"
+        for letter_frame in word_frame.winfo_children():
+            letter_frame.configure(text_color=text_color)
+        word_frame.configure(fg_color="transparent")
