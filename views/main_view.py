@@ -172,6 +172,7 @@ class MainView(CTkFrame):
         self.canvas = CTkFrame(self)
         self.canvas.pack(fill="x", padx=pad_x)
         self.create_word_frame()
+        self.set_active_word()
         self.canvas_h = self.word_height * 3 + WORD_PAD * 4
         self.canvas.configure(height=self.canvas_h)
 
@@ -181,7 +182,7 @@ class MainView(CTkFrame):
         self.entry.pack()
 
     def create_word_frame(self):
-        word_label = CTkFrame(self.canvas)
+        word_label = CTkFrame(self.canvas, fg_color="transparent")
         word = self.words_set[self.current_word_index]
         self.current_word_index += 1
         for letter in word:
@@ -260,7 +261,7 @@ class MainView(CTkFrame):
     def entry_text_callback(self, var=None, index=None, mode=None):
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_entered = self.entry_text.get()
-        self.set_active_word()
+
         if word_entered != "" and word_entered[-1] == " ":
             self.check_final_word()
             self.next_word()
@@ -287,13 +288,13 @@ class MainView(CTkFrame):
         self.active_word_index += 1
         self.entry_text.set("")
         next_word_frame = self.canvas.winfo_children()[self.active_word_index]
+        self.set_active_word()
 
         if (next_word_frame.winfo_y() * SCREEN_SCALE) > (
             3 * WORD_PAD + 2 * self.word_height
         ):
             self.scroll_lines()
             for word_frame in self.canvas.winfo_children():
-                print(word_frame.winfo_y() * SCREEN_SCALE)
                 if word_frame.winfo_y() * SCREEN_SCALE < 0:
                     word_frame.destroy()
                     self.active_word_index -= 1
