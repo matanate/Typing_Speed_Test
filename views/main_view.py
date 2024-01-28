@@ -44,14 +44,17 @@ class MainView(CTkFrame):
             "dog",
         }
 
-        self.word_labels = []
+        self.word_height = None
+        self.cumulative_width = WORD_PAD
+        self.cumulative_height = WORD_PAD
+
         # initialize Title
         self.initialize_titles()
 
         # Initialize Canvas
         self.initialize_canvas()
 
-        self.bind("<Configure>", self.update_words_layout)
+        self.bind("<Configure>", self.initialize_word_layout)
 
     def initialize_titles(self):
         self.titles_frame = CTkFrame(self, fg_color="transparent")
@@ -83,39 +86,46 @@ class MainView(CTkFrame):
     def initialize_canvas(self):
         self.parent.update_idletasks()
         pad_x = self.parent.winfo_screenwidth() * SCREEN_SCALE * 0.1
-
         self.canvas = CTkFrame(self)
         self.canvas.pack(fill="x", padx=pad_x)
-        self.get_words()
+        self.create_word_frame("abc")
         self.canvas_h = self.word_height * 3 + WORD_PAD * 4
         self.canvas.configure(height=self.canvas_h)
 
-    def get_words(self):
-        i = 0
-        for word in self.words_set:
-            word_label = CTkFrame(self.canvas, border_width=0)
-            for letter in word:
-                letter_label = CTkLabel(word_label, text=letter, font=TEXT_FONT)
-                letter_label.pack(side="left")
+    def create_word_frame(self, word):
+        word_label = CTkFrame(self.canvas)
+        for letter in word:
+            letter_label = CTkLabel(word_label, text=letter, font=TEXT_FONT)
+            letter_label.pack(side="left")
         self.canvas.update_idletasks()
-        self.word_height = word_label.winfo_reqheight() * SCREEN_SCALE
+        if not self.word_height:
+            self.word_height = word_label.winfo_reqheight() * SCREEN_SCALE
 
-    def update_words_layout(self, event=None):
+    def initialize_word_layout(self, event=None):
+        while self.cumulative_height < 3 * self.word_height + 4 * WORD_PAD:
+            self.create_word_frame("abc")
+            self.update_words_layout()
+        self.update_words_layout()
+
+    def update_words_layout(self):
         self.canvas.update_idletasks()
         self.canvas_w = self.canvas.winfo_width() * SCREEN_SCALE
-        pad_x = WORD_PAD
-        pad_y = WORD_PAD
-        cumulative_width = pad_x
-        cumulative_height = pad_y
+
+        self.cumulative_width = WORD_PAD
+        self.cumulative_height = WORD_PAD
 
         for word_frame in self.canvas.winfo_children():
             word_width = word_frame.winfo_reqwidth() * SCREEN_SCALE
 
             # Check if adding the next word would exceed the available width
-            if cumulative_width + word_width + pad_x > self.canvas_w:
-                cumulative_width = pad_x  # Reset cumulative width for the new row
-                cumulative_height += self.word_height + pad_y
+            if self.cumulative_width + word_width + WORD_PAD > self.canvas_w:
+                self.cumulative_width = (
+                    WORD_PAD  # Reset cumulative width for the new row
+                )
+                self.cumulative_height += self.word_height + WORD_PAD
 
-            word_frame.place(x=cumulative_width, y=cumulative_height, anchor="nw")
+            word_frame.place(
+                x=self.cumulative_width, y=self.cumulative_height, anchor="nw"
+            )
 
-            cumulative_width += word_width + pad_x
+            self.cumulative_width += word_width + WORD_PAD
