@@ -124,6 +124,8 @@ class MainView(CTkFrame):
         self.current_word_index = 0
         self.active_word_index = 0
 
+        self.words_results = []
+
         self.word_height = None
         self.cumulative_width = WORD_PAD
         self.cumulative_height = WORD_PAD
@@ -300,7 +302,7 @@ class MainView(CTkFrame):
     def entry_text_callback(self, var=None, index=None, mode=None):
         if not self.timer.is_on:
             self.timer.start_timer()
-            self.timer_countdown()
+            self.after(1000, self.start_countdown)
 
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_entered = self.entry_text.get()
@@ -327,8 +329,6 @@ class MainView(CTkFrame):
 
     def next_word(self):
         self.timer.next_word()
-        self.set_words_per_min()
-        self.set_character_per_min()
 
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_frame.configure(fg_color="transparent")
@@ -364,6 +364,13 @@ class MainView(CTkFrame):
                 if input_letter != letter:
                     is_correct = False
                     break
+        result = {
+            "is_correct": is_correct,
+            "word": self.words_list[self.active_word_index],
+            "word_time": (self.timer.current_time() - self.timer.word_start_time) / 60,
+        }
+        self.words_results.append(result)
+        self.set_cpm_wpm()
         if is_correct:
             text_color = "blue"
         else:
@@ -372,23 +379,26 @@ class MainView(CTkFrame):
             letter_frame.configure(text_color=text_color)
         word_frame.configure(fg_color="transparent")
 
-    def set_words_per_min(self):
-        words_count = len(self.timer.words_time)
+    def set_cpm_wpm(self):
+        char_count = 0
+        words_count = 0
         total_minute = self.timer.current_time() / 60
+        for result in self.words_results:
+            if result["is_correct"]:
+                char_count += len(result["word"])
+                words_count += 1
+        if words_count == 0:
+            mean_cpm = 0
+        else:
+            mean_cpm = int(char_count / total_minute)
         mean_wpm = int(words_count / total_minute)
+        self.cpm.set(mean_cpm)
         self.wpm.set(mean_wpm)
 
-    def set_character_per_min(self):
-        cpm_sum = 0
-        words_count = len(self.timer.words_time)
-        for word, word_time in zip(self.words_list, self.timer.words_time):
-            word_length = len(word)
-            cpm_sum += word_length / (word_time / 60)
-        mean_cpm = int(cpm_sum / words_count)
-        self.cpm.set(mean_cpm)
-
-    def timer_countdown(self):
+    def start_countdown(self):
         time_left = self.time_left.get()
         self.time_left.set(time_left - 1)
         if time_left > 1:
-            self.after(1000, self.timer_countdown)
+            self.after(1000, self.start_countdown)
+        else:
+            self.entry.configure(state="disabled")
