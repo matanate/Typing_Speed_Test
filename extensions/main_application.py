@@ -2,10 +2,12 @@
 import os
 
 # Third-party library imports
-from customtkinter import CTk, set_appearance_mode
+from customtkinter import CTk, set_appearance_mode, CTkLabel, CTkFrame, CTkImage
+from PIL import Image
 
 # Local imports
 from views import MainView
+from utils import SUBTITLE_FONT, TITLE_FONT
 
 
 class MainApplication(CTk):
@@ -48,7 +50,37 @@ class MainApplication(CTk):
         # Set the window geometry
         self.geometry(f"{self.window_w}x{self.window_h}+{self.x}+{self.y}")
 
+        # initialize Title
+        self.initialize_titles()
+
         self.switch_to_main_view()
+
+    def initialize_titles(self):
+        self.titles_frame = CTkFrame(self, fg_color="transparent")
+        self.titles_frame.pack(pady=50)
+
+        # Create logo on both side of the text
+        logo_image_path = os.path.join("resources", "images", "logo.png")
+        pil_logo_image = Image.open(logo_image_path)
+        self.logo_image = CTkImage(pil_logo_image, size=(150, 150))
+        self.logo_image_label1 = CTkLabel(
+            self.titles_frame, image=self.logo_image, text=None
+        )
+        self.logo_image_label2 = CTkLabel(
+            self.titles_frame, image=self.logo_image, text=None
+        )
+        self.logo_image_label1.pack(side="right")
+        self.logo_image_label2.pack(side="left")
+
+        # Create Title and SubTitle
+        self.subtitle = CTkLabel(
+            self.titles_frame, text="Typing Speed Test", font=SUBTITLE_FONT
+        )
+        self.subtitle.pack()
+        self.title = CTkLabel(
+            self.titles_frame, text="Test your typing ability", font=TITLE_FONT
+        )
+        self.title.pack()
 
     def switch_view(self, view_class, *args, **kwargs):
         """Switches to a new view and destroys the current one.

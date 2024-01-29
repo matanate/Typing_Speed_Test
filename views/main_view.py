@@ -7,22 +7,22 @@ from threading import Thread
 import random
 
 # Third-party library imports
-from customtkinter import CTkFrame, CTkLabel, CTkImage, CTkEntry
-from PIL import Image
+from customtkinter import CTkFrame, CTkLabel, CTkEntry
 
 
 # Local imports
-from utils import SUBTITLE_FONT, TITLE_FONT, TEXT_FONT, SCREEN_SCALE, WORD_PAD, Timer
+from utils import TEXT_FONT, SCREEN_SCALE, WORD_PAD, Timer
 
 
 class MainView(CTkFrame):
     def __init__(self, parent, switch_view, *args, **kwargs):
         CTkFrame.__init__(self, parent, *args, **kwargs)
+        self.configure(fg_color="transparent")
         self.parent = parent
         self.switch_view = switch_view
         with open(os.path.join("resources", "data", "Words.csv")) as file:
             file_list = list(csv.reader(file))
-        self.words_list = [word[0] for word in file_list]
+        self.words_list = [word[0].lower() for word in file_list]
         random.shuffle(self.words_list)
 
         self.current_word_index = 0
@@ -33,9 +33,6 @@ class MainView(CTkFrame):
         self.word_height = None
         self.cumulative_width = WORD_PAD
         self.cumulative_height = WORD_PAD
-
-        # initialize Title
-        self.initialize_titles()
 
         # Initialize timers
         self.initialize_timers()
@@ -51,33 +48,6 @@ class MainView(CTkFrame):
 
         self.bind("<Configure>", self.configure_event_handler)
         self.entry_text.trace_add("write", self.entry_text_callback)
-
-    def initialize_titles(self):
-        self.titles_frame = CTkFrame(self, fg_color="transparent")
-        self.titles_frame.pack(pady=50)
-
-        # Create logo on both side of the text
-        logo_image_path = os.path.join("resources", "images", "logo.png")
-        pil_logo_image = Image.open(logo_image_path)
-        self.logo_image = CTkImage(pil_logo_image, size=(150, 150))
-        self.logo_image_label1 = CTkLabel(
-            self.titles_frame, image=self.logo_image, text=None
-        )
-        self.logo_image_label2 = CTkLabel(
-            self.titles_frame, image=self.logo_image, text=None
-        )
-        self.logo_image_label1.pack(side="right")
-        self.logo_image_label2.pack(side="left")
-
-        # Create Title and SubTitle
-        self.subtitle = CTkLabel(
-            self.titles_frame, text="Typing Speed Test", font=SUBTITLE_FONT
-        )
-        self.subtitle.pack()
-        self.title = CTkLabel(
-            self.titles_frame, text="Test your typing ability", font=TITLE_FONT
-        )
-        self.title.pack()
 
     def initialize_timers(self):
         self.timers_frame = CTkFrame(self, fg_color="transparent")
@@ -290,7 +260,9 @@ class MainView(CTkFrame):
         result = {
             "is_correct": is_correct,
             "word": self.words_list[self.active_word_index],
-            "word_time": (self.timer.current_time() - self.timer.word_start_time) / 60,
+            "word_entered": word_entered,
+            "word_time_min": (self.timer.current_time() - self.timer.word_start_time)
+            / 60,
         }
         self.words_results.append(result)
         self.set_cpm_wpm()
@@ -324,4 +296,5 @@ class MainView(CTkFrame):
         if time_left > 1:
             self.after(1000, self.start_countdown)
         else:
-            self.entry.configure(state="disabled")
+            pass
+            # self.switch_view(ResultView, self.words_results)
