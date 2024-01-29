@@ -300,6 +300,7 @@ class MainView(CTkFrame):
     def entry_text_callback(self, var=None, index=None, mode=None):
         if not self.timer.is_on:
             self.timer.start_timer()
+            self.timer_countdown()
 
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_entered = self.entry_text.get()
@@ -385,3 +386,9 @@ class MainView(CTkFrame):
             cpm_sum += word_length / (word_time / 60)
         mean_cpm = int(cpm_sum / words_count)
         self.cpm.set(mean_cpm)
+
+    def timer_countdown(self):
+        time_left = self.time_left.get()
+        self.time_left.set(time_left - 1)
+        if time_left > 1:
+            self.after(1000, self.timer_countdown)
