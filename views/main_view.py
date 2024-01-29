@@ -1,9 +1,10 @@
 # Standard library imports
 import os
-import time
+import csv
 from itertools import zip_longest
 from tkinter import StringVar, IntVar
 from threading import Thread
+import random
 
 # Third-party library imports
 from customtkinter import CTkFrame, CTkLabel, CTkImage, CTkEntry
@@ -19,109 +20,11 @@ class MainView(CTkFrame):
         CTkFrame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.switch_view = switch_view
+        with open(os.path.join("resources", "data", "Words.csv")) as file:
+            file_list = list(csv.reader(file))
+        self.words_list = [word[0] for word in file_list]
+        random.shuffle(self.words_list)
 
-        self.words_list = [
-            "pound",
-            "language",
-            "don't",
-            "use",
-            "may",
-            "hear",
-            "hand",
-            "ago",
-            "girl",
-            "hot",
-            "mark",
-            "record",
-            "is",
-            "change",
-            "reach",
-            "under",
-            "close",
-            "wheel",
-            "pool",
-            "shore",
-            "door",
-            "rocket",
-            "mountain",
-            "cat",
-            "dog",
-            "pound",
-            "language",
-            "don't",
-            "use",
-            "may",
-            "hear",
-            "hand",
-            "ago",
-            "girl",
-            "hot",
-            "mark",
-            "record",
-            "is",
-            "change",
-            "reach",
-            "under",
-            "close",
-            "wheel",
-            "pool",
-            "shore",
-            "door",
-            "rocket",
-            "mountain",
-            "cat",
-            "dog",
-            "pound",
-            "language",
-            "don't",
-            "use",
-            "may",
-            "hear",
-            "hand",
-            "ago",
-            "girl",
-            "hot",
-            "mark",
-            "record",
-            "is",
-            "change",
-            "reach",
-            "under",
-            "close",
-            "wheel",
-            "pool",
-            "shore",
-            "door",
-            "rocket",
-            "mountain",
-            "cat",
-            "dog",
-            "pound",
-            "language",
-            "don't",
-            "use",
-            "may",
-            "hear",
-            "hand",
-            "ago",
-            "girl",
-            "hot",
-            "mark",
-            "record",
-            "is",
-            "change",
-            "reach",
-            "under",
-            "close",
-            "wheel",
-            "pool",
-            "shore",
-            "door",
-            "rocket",
-            "mountain",
-            "cat",
-            "dog",
-        ]
         self.current_word_index = 0
         self.active_word_index = 0
 
