@@ -1,5 +1,6 @@
 # Standard library imports
 import os
+import time
 from itertools import zip_longest
 from tkinter import StringVar
 
@@ -9,7 +10,7 @@ from PIL import Image
 
 
 # Local imports
-from utils import SUBTITLE_FONT, TITLE_FONT, TEXT_FONT, SCREEN_SCALE, WORD_PAD
+from utils import SUBTITLE_FONT, TITLE_FONT, TEXT_FONT, SCREEN_SCALE, WORD_PAD, Timer
 
 
 class MainView(CTkFrame):
@@ -136,6 +137,8 @@ class MainView(CTkFrame):
         # Initialize Entry
         self.initialize_entry()
 
+        self.timer = Timer()
+
         self.bind("<Configure>", self.configure_event_handler)
         self.entry_text.trace_add("write", self.entry_text_callback)
 
@@ -259,6 +262,9 @@ class MainView(CTkFrame):
             self.canvas.update()
 
     def entry_text_callback(self, var=None, index=None, mode=None):
+        if not self.timer.is_on:
+            self.timer.start_timer()
+
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_entered = self.entry_text.get()
 
@@ -283,6 +289,8 @@ class MainView(CTkFrame):
         word_frame.configure(fg_color="#96E9C6")
 
     def next_word(self):
+        self.timer.next_word()
+
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_frame.configure(fg_color="transparent")
         self.active_word_index += 1
