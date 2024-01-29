@@ -2,7 +2,7 @@
 import os
 import time
 from itertools import zip_longest
-from tkinter import StringVar
+from tkinter import StringVar, IntVar
 
 # Third-party library imports
 from customtkinter import CTkFrame, CTkLabel, CTkImage, CTkEntry
@@ -19,7 +19,7 @@ class MainView(CTkFrame):
         self.parent = parent
         self.switch_view = switch_view
 
-        self.words_set = [
+        self.words_list = [
             "pound",
             "language",
             "don't",
@@ -131,6 +131,9 @@ class MainView(CTkFrame):
         # initialize Title
         self.initialize_titles()
 
+        # Initialize timers
+        self.initialize_timers()
+
         # Initialize Canvas
         self.initialize_canvas()
 
@@ -169,6 +172,39 @@ class MainView(CTkFrame):
         )
         self.title.pack()
 
+    def initialize_timers(self):
+        self.timers_frame = CTkFrame(self, fg_color="transparent")
+        self.timers_frame.pack()
+
+        self.time_left = IntVar(value=60)
+        self.time_left_frame = CTkFrame(self.timers_frame)
+        self.time_left_frame.pack(side="right", padx=50)
+        self.time_left_label = CTkLabel(self.time_left_frame, text="Time Left: ")
+        self.time_left_value = CTkLabel(
+            self.time_left_frame, textvariable=self.time_left
+        )
+
+        self.time_left_label.pack(side="left")
+        self.time_left_value.pack(side="right")
+
+        self.wpm = IntVar()
+        self.wpm_frame = CTkFrame(self.timers_frame)
+        self.wpm_frame.pack(side="left", padx=50)
+        self.wpm_label = CTkLabel(self.wpm_frame, text="WPM: ")
+        self.wpm_value = CTkLabel(self.wpm_frame, textvariable=self.wpm)
+
+        self.wpm_label.pack(side="left")
+        self.wpm_value.pack(side="right")
+
+        self.cpm = IntVar()
+        self.cpm_frame = CTkFrame(self.timers_frame)
+        self.cpm_frame.pack(side="left", padx=50)
+        self.cpm_label = CTkLabel(self.cpm_frame, text="CPM: ")
+        self.cpm_value = CTkLabel(self.cpm_frame, textvariable=self.cpm)
+
+        self.cpm_label.pack(side="left")
+        self.cpm_value.pack(side="right")
+
     def initialize_canvas(self):
         self.parent.update_idletasks()
         pad_x = self.parent.winfo_screenwidth() * SCREEN_SCALE * 0.1
@@ -186,7 +222,7 @@ class MainView(CTkFrame):
 
     def create_word_frame(self):
         word_label = CTkFrame(self.canvas, fg_color="transparent")
-        word = self.words_set[self.current_word_index]
+        word = self.words_list[self.current_word_index]
         self.current_word_index += 1
         for letter in word:
             letter_label = CTkLabel(word_label, text=letter, font=TEXT_FONT)
@@ -290,6 +326,8 @@ class MainView(CTkFrame):
 
     def next_word(self):
         self.timer.next_word()
+        self.set_words_per_min()
+        self.set_character_per_min()
 
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_frame.configure(fg_color="transparent")
@@ -332,3 +370,18 @@ class MainView(CTkFrame):
         for letter_frame in word_frame.winfo_children():
             letter_frame.configure(text_color=text_color)
         word_frame.configure(fg_color="transparent")
+
+    def set_words_per_min(self):
+        words_count = len(self.timer.words_time)
+        total_minute = self.timer.current_time() / 60
+        mean_wpm = int(words_count / total_minute)
+        self.wpm.set(mean_wpm)
+
+    def set_character_per_min(self):
+        cpm_sum = 0
+        words_count = len(self.timer.words_time)
+        for word, word_time in zip(self.words_list, self.timer.words_time):
+            word_length = len(word)
+            cpm_sum += word_length / (word_time / 60)
+        mean_cpm = int(cpm_sum / words_count)
+        self.cpm.set(mean_cpm)
