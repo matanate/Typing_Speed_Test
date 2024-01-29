@@ -3,6 +3,7 @@ import os
 import time
 from itertools import zip_longest
 from tkinter import StringVar, IntVar
+from threading import Thread
 
 # Third-party library imports
 from customtkinter import CTkFrame, CTkLabel, CTkImage, CTkEntry
@@ -141,6 +142,7 @@ class MainView(CTkFrame):
 
         # Initialize Entry
         self.initialize_entry()
+        self.entry.focus()
 
         self.timer = Timer()
 
@@ -210,8 +212,10 @@ class MainView(CTkFrame):
     def initialize_canvas(self):
         self.parent.update_idletasks()
         pad_x = self.parent.winfo_screenwidth() * SCREEN_SCALE * 0.1
+        self.canvas_w = 8 * pad_x
         self.canvas = CTkFrame(self)
         self.canvas.pack(fill="x", padx=pad_x)
+
         self.create_word_frame()
         self.set_active_word()
         self.canvas_h = self.word_height * 3 + WORD_PAD * 4
@@ -223,81 +227,92 @@ class MainView(CTkFrame):
         self.entry.pack()
 
     def create_word_frame(self):
-        word_label = CTkFrame(self.canvas, fg_color="transparent")
+        word_frame = CTkFrame(self.canvas, fg_color="transparent")
         word = self.words_list[self.current_word_index]
         self.current_word_index += 1
         for letter in word:
-            letter_label = CTkLabel(word_label, text=letter, font=TEXT_FONT)
+            letter_label = CTkLabel(word_frame, text=letter, font=TEXT_FONT)
             letter_label.pack(side="left")
         self.canvas.update_idletasks()
         if not self.word_height:
-            self.word_height = word_label.winfo_reqheight() * SCREEN_SCALE
+            self.word_height = word_frame.winfo_reqheight() * SCREEN_SCALE
+        self.place_word_frame(word_frame)
 
     def configure_event_handler(self, event=None):
+        self.canvas.update_idletasks()
+        self.update_words_layout()
         while self.cumulative_height < 3 * self.word_height + 4 * WORD_PAD:
             self.create_word_frame()
-            self.update_words_layout()
-        self.update_words_layout()
+
+    def place_word_frame(self, word_frame):
+        word_width = word_frame.winfo_reqwidth() * SCREEN_SCALE
+
+        # Check if adding the next word would exceed the available width
+        if self.cumulative_width + word_width + WORD_PAD > self.canvas_w:
+            self.cumulative_width = WORD_PAD  # Reset cumulative width for the new row
+            self.cumulative_height += self.word_height + WORD_PAD
+
+        word_frame.place(x=self.cumulative_width, y=self.cumulative_height, anchor="nw")
+
+        self.cumulative_width += word_width + WORD_PAD
 
     def update_words_layout(self):
-        self.canvas.update_idletasks()
         self.canvas_w = self.canvas.winfo_width() * SCREEN_SCALE
 
         self.cumulative_width = WORD_PAD
         self.cumulative_height = WORD_PAD
-
         for word_frame in self.canvas.winfo_children():
-            word_width = word_frame.winfo_reqwidth() * SCREEN_SCALE
-
-            # Check if adding the next word would exceed the available width
-            if self.cumulative_width + word_width + WORD_PAD > self.canvas_w:
-                self.cumulative_width = (
-                    WORD_PAD  # Reset cumulative width for the new row
-                )
-                self.cumulative_height += self.word_height + WORD_PAD
-
-            word_frame.place(
-                x=self.cumulative_width, y=self.cumulative_height, anchor="nw"
-            )
-
-            self.cumulative_width += word_width + WORD_PAD
+            self.place_word_frame(word_frame)
 
     def scroll_lines(self):
-        iterations = 10
+        iterations = 6
 
         # Incremental movement in pixels per iteration
-        movement_per_iteration = (self.word_height + WORD_PAD) / iterations
-
-        # Define a recursive function for smooth animation
-        def move_word_frame_smoothly(
-            word_frame, current_x, current_y, target_y, iteration
-        ):
-            if iteration > 0:
-                new_y = current_y - movement_per_iteration
-
-                word_frame.place(x=current_x, y=new_y)
-
-                # Schedule the next movement
-                self.after(
-                    10,
-                    move_word_frame_smoothly,
-                    word_frame,
-                    current_x,
-                    new_y,
-                    target_y,
-                    iteration - 1,
-                )
+        total_movement = self.word_height + WORD_PAD
+        movement_per_iteration = (total_movement) / iterations
 
         for word_frame in self.canvas.winfo_children():
             current_y = word_frame.winfo_y() * SCREEN_SCALE
             current_x = word_frame.winfo_x() * SCREEN_SCALE
             target_y = current_y - self.word_height - WORD_PAD
-
             # Start the smooth animation
-            move_word_frame_smoothly(
-                word_frame, current_x, current_y, target_y, iterations
+            self.move_word_frame_smoothly(
+                word_frame,
+                current_x,
+                current_y,
+                target_y,
+                iterations,
+                movement_per_iteration,
             )
-            self.canvas.update()
+
+        self.cumulative_height -= total_movement
+        self.canvas.update()
+
+    def move_word_frame_smoothly(
+        self,
+        word_frame,
+        current_x,
+        current_y,
+        target_y,
+        iteration,
+        movement_per_iteration,
+    ):
+        if iteration > 0:
+            new_y = current_y - movement_per_iteration
+
+            word_frame.place(x=current_x, y=new_y)
+
+            # Schedule the next movement
+            self.after(
+                1,
+                self.move_word_frame_smoothly,
+                word_frame,
+                current_x,
+                new_y,
+                target_y,
+                iteration - 1,
+                movement_per_iteration,
+            )
 
     def entry_text_callback(self, var=None, index=None, mode=None):
         if not self.timer.is_on:
@@ -310,6 +325,7 @@ class MainView(CTkFrame):
         if word_entered != "" and word_entered[-1] == " ":
             self.check_final_word()
             self.next_word()
+            self.check_scroll()
         else:
             for letter_frame, input_letter in zip_longest(
                 word_frame.winfo_children(), word_entered
@@ -333,21 +349,25 @@ class MainView(CTkFrame):
         word_frame = self.canvas.winfo_children()[self.active_word_index]
         word_frame.configure(fg_color="transparent")
         self.active_word_index += 1
-        self.entry_text.set("")
-        next_word_frame = self.canvas.winfo_children()[self.active_word_index]
+        self.entry.delete(0, "end")
         self.set_active_word()
 
-        if (next_word_frame.winfo_y() * SCREEN_SCALE) > (
+    def check_scroll(self):
+        word_frame = self.canvas.winfo_children()[self.active_word_index]
+
+        if (word_frame.winfo_y() * SCREEN_SCALE) > (
             3 * WORD_PAD + 2 * self.word_height
         ):
-            self.scroll_lines()
+            scroll_thread = Thread(target=self.scroll_lines)
+            scroll_thread.start()
             for word_frame in self.canvas.winfo_children():
                 if word_frame.winfo_y() * SCREEN_SCALE < 0:
                     word_frame.destroy()
                     self.active_word_index -= 1
                 else:
                     break
-            self.configure_event_handler()
+            while self.cumulative_height < 3 * self.word_height + 4 * WORD_PAD:
+                self.create_word_frame()
 
     def check_final_word(self):
         word_frame = self.canvas.winfo_children()[self.active_word_index]

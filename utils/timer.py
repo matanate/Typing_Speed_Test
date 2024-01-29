@@ -23,10 +23,5 @@ class Timer:
         self.words_time.append(time.time() - self.word_start_time)
         self.word_start_time = time.time()
 
-    def end_timer(self):
-        self.next_word()
-        self.total_time = time.time() - self.start_time
-        self.is_on = False
-
     def current_time(self):
         return time.time() - self.start_time
