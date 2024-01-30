@@ -6,7 +6,7 @@ from customtkinter import CTk, set_appearance_mode, CTkLabel, CTkFrame, CTkImage
 from PIL import Image
 
 # Local imports
-from views import MainView
+from views import *
 from utils import SUBTITLE_FONT, TITLE_FONT
 
 
@@ -29,6 +29,8 @@ class MainApplication(CTk):
         *args, **kwargs: Additional arguments passed to the Tk constructor.
         """
         super().__init__(*args, **kwargs)
+        self.MainView = MainView
+        self.ResultView = ResultView
 
         # Initialize the appearance mode to "system"
         set_appearance_mode("system")
@@ -53,7 +55,7 @@ class MainApplication(CTk):
         # initialize Title
         self.initialize_titles()
 
-        self.switch_to_main_view()
+        self.after(50, lambda: self.switch_view(self.MainView))
 
     def initialize_titles(self):
         self.titles_frame = CTkFrame(self, fg_color="transparent")
@@ -97,6 +99,3 @@ class MainApplication(CTk):
 
         selected_view.pack(fill="both", expand=True)
         self.current_view = selected_view
-
-    def switch_to_main_view(self):
-        self.after(50, lambda: self.switch_view(MainView))

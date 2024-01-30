@@ -2,13 +2,86 @@
 
 
 # Third-party library imports
-from customtkinter import CTkFrame
+from customtkinter import CTkFrame, CTkLabel
 
 # Local imports
 
 
 class ResultView(CTkFrame):
-    def __init__(self, parent, switch_view, result=None, *args, **kwargs):
-        CTkFrame.__init__(self, parent, *args, **kwargs)
+    def __init__(self, parent, switch_view, *args, **kwargs):
+        CTkFrame.__init__(self, parent, *args[1:], **kwargs)
         self.parent = parent
         self.switch_view = switch_view
+        self.result = args[0]
+        self.configure(fg_color="transparent")
+
+        # Calculate the results
+        self.calculate_from_result()
+
+        # Initialize Score
+        self.initialize_score()
+
+    def calculate_from_result(self):
+        total_time = 1
+        self.potential_wpm = int(len(self.result) / total_time)
+        self.wrong_words = []
+
+        word_count = 0
+        character_count = 0
+        potential_character_count = 0
+
+        for word_result in self.result:
+            if word_result["is_correct"]:
+                character_count += len(word_result["word"])
+                word_count += 1
+            else:
+                potential_character_count += len(word_result["word"])
+                self.wrong_words.append(
+                    (word_result["word_entered"], word_result["word"])
+                )
+        potential_character_count += character_count
+
+        self.correct_words = word_count
+        self.cpm_score = int(character_count / total_time)
+        self.potential_cpm_score = int(potential_character_count / total_time)
+        self.wpm_score = int(word_count / total_time)
+
+    def initialize_score(self):
+        self.score_frame = CTkFrame(self, fg_color="transparent")
+        self.score_frame.pack()
+
+        self.score_label = CTkLabel(
+            self.score_frame,
+            fg_color="transparent",
+            text=f"Your Score: {self.cpm_score} CPM, (that is {self.wpm_score} WPM)",
+        )
+        self.score_label.pack()
+
+        if self.wrong_words:
+            self.congrats_label = CTkLabel(
+                self.score_frame,
+                fg_color="transparent",
+                text=f"In reality, you typed {self.potential_cpm_score} CPM, but you made {len(self.wrong_words)} mistakes (out of {len(self.result)} words),\nwhich were not counted in the corrected scores.",
+            )
+            self.congrats_label.pack()
+
+            self.wrong_label = CTkLabel(
+                self.score_frame,
+                fg_color="transparent",
+                text=f"Your mistakes were:",
+            )
+            self.wrong_label.pack()
+            for wrong_word in self.wrong_words:
+                label = CTkLabel(
+                    self.score_frame,
+                    fg_color="transparent",
+                    text=f'Instead of "{wrong_word[1]}", you typed "{wrong_word[0]}".',
+                )
+                label.pack()
+        else:
+            self.congrats_label = CTkLabel(
+                self.score_frame,
+                fg_color="transparent",
+                text=f"Congratulation! you typed {self.correct_words} words correctly!",
+            )
+            self.congrats_label.pack()
