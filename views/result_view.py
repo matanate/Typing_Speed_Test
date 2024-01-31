@@ -5,6 +5,7 @@
 from customtkinter import CTkFrame, CTkLabel
 
 # Local imports
+from utils import SCORE_FONT, WRONG_WORDS_FONT, WRONG_WORDS_TITLE_FONT
 
 
 class ResultView(CTkFrame):
@@ -47,28 +48,31 @@ class ResultView(CTkFrame):
         self.wpm_score = int(word_count / total_time)
 
     def initialize_score(self):
-        self.score_frame = CTkFrame(self, fg_color="transparent")
+        self.score_frame = CTkFrame(self)
         self.score_frame.pack()
 
         self.score_label = CTkLabel(
             self.score_frame,
             fg_color="transparent",
             text=f"Your Score: {self.cpm_score} CPM, (that is {self.wpm_score} WPM)",
+            font=SCORE_FONT,
         )
-        self.score_label.pack()
+        self.score_label.pack(pady=20)
 
         if self.wrong_words:
             self.congrats_label = CTkLabel(
                 self.score_frame,
                 fg_color="transparent",
                 text=f"In reality, you typed {self.potential_cpm_score} CPM, but you made {len(self.wrong_words)} mistakes (out of {len(self.result)} words),\nwhich were not counted in the corrected scores.",
+                font=WRONG_WORDS_TITLE_FONT,
             )
-            self.congrats_label.pack()
+            self.congrats_label.pack(pady=10)
 
             self.wrong_label = CTkLabel(
                 self.score_frame,
                 fg_color="transparent",
                 text=f"Your mistakes were:",
+                font=WRONG_WORDS_FONT + ("bold",),
             )
             self.wrong_label.pack()
             for wrong_word in self.wrong_words:
@@ -76,6 +80,7 @@ class ResultView(CTkFrame):
                     self.score_frame,
                     fg_color="transparent",
                     text=f'Instead of "{wrong_word[1]}", you typed "{wrong_word[0]}".',
+                    font=WRONG_WORDS_FONT,
                 )
                 label.pack()
         else:
@@ -83,5 +88,6 @@ class ResultView(CTkFrame):
                 self.score_frame,
                 fg_color="transparent",
                 text=f"Congratulation! you typed {self.correct_words} words correctly!",
+                font=WRONG_WORDS_TITLE_FONT,
             )
             self.congrats_label.pack()

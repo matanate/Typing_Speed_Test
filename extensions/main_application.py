@@ -2,8 +2,9 @@
 import os
 
 # Third-party library imports
-from customtkinter import CTk, set_appearance_mode, CTkLabel, CTkFrame, CTkImage
 from PIL import Image
+from customtkinter import CTk, set_appearance_mode, CTkLabel, CTkFrame, CTkImage
+
 
 # Local imports
 from views import *
@@ -75,14 +76,14 @@ class MainApplication(CTk):
         self.logo_image_label2.pack(side="left")
 
         # Create Title and SubTitle
-        self.subtitle = CTkLabel(
+        self.subtitle_label = CTkLabel(
             self.titles_frame, text="Typing Speed Test", font=SUBTITLE_FONT
         )
-        self.subtitle.pack()
-        self.title = CTkLabel(
+        self.subtitle_label.pack()
+        self.title_label = CTkLabel(
             self.titles_frame, text="Test your typing ability", font=TITLE_FONT
         )
-        self.title.pack()
+        self.title_label.pack()
 
     def switch_view(self, view_class, *args, **kwargs):
         """Switches to a new view and destroys the current one.
