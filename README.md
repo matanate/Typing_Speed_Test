@@ -52,6 +52,13 @@ The Typing Speed Test App is a simple and interactive application designed to me
 5. The timers will track your overall time, time left, and calculate WPM and CPM.
 6. Once the time is up, the app will display your performance results.
 
+## Data Source
+
+The word data used in this application was sourced from [Word Difficulty Dataset on Kaggle](https://www.kaggle.com/datasets/kkhandekar/word-difficulty/data). Specifically, the 1000 most easy words were extracted from this dataset for use in the typing speed test application.
+
+I would like to express our gratitude to the original creator of the dataset, [koustubhk](https://www.kaggle.com/kkhandekar), for providing this valuable resource to the community.
+
+
 ## Customization
 
 - Word Lists: You can customize the word lists used in the test by modifying the CSV file located in the resources/data directory.
