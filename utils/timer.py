@@ -1,11 +1,6 @@
 # Standard library imports
 import time
 
-# Third-party library imports
-
-# Local imports
-
-
 class Timer:
     """
     Timer class provides functionality for measuring time intervals.

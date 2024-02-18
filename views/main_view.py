@@ -237,7 +237,9 @@ class MainView(CTkFrame):
         if word_entered != "" and word_entered[-1] == " ":
             self.check_final_word(word_frame)
             self.next_word()
+            word_frame = self.canvas.winfo_children()[self.active_word_index]
             self.check_scroll(word_frame)
+
             # Destroy the line that was scrolled
             for word_frame in self.canvas.winfo_children():
                 if word_frame.winfo_y() * SCREEN_SCALE < 0:
@@ -293,7 +295,7 @@ class MainView(CTkFrame):
         word_frame (tkinter.Frame): The current word frame.
         """
         # Check if scrolling is required (active word in third row)
-        if (word_frame.winfo_y() * SCREEN_SCALE) == (
+        if (word_frame.winfo_y() * SCREEN_SCALE) >= (
             3 * WORD_PAD + 2 * self.word_height
         ):
             # Scroll the current lines on the canvas in a thread
