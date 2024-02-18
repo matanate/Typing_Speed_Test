@@ -2,7 +2,7 @@
 
 
 # Third-party library imports
-from customtkinter import CTkFrame, CTkLabel
+from customtkinter import CTkFrame, CTkLabel, CTkButton
 
 # Local imports
 from utils import SCORE_FONT, WRONG_WORDS_FONT, WRONG_WORDS_TITLE_FONT
@@ -21,6 +21,9 @@ class ResultView(CTkFrame):
 
         # Initialize Score
         self.initialize_score()
+
+        # Initialize restart button
+        self.initialize_restart_btn()
 
     def calculate_from_result(self):
         total_time = 1
@@ -91,3 +94,11 @@ class ResultView(CTkFrame):
                 font=WRONG_WORDS_TITLE_FONT,
             )
             self.congrats_label.pack()
+
+    def initialize_restart_btn(self):
+        self.restart_btn = CTkButton(
+            self,
+            text="Restart",
+            command=lambda: self.switch_view(self.parent.MainView),
+        )
+        self.restart_btn.pack()
